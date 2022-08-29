@@ -1,5 +1,9 @@
+import cv2
+import numpy as np
 import retro
 import pygame
+from PIL import ImageGrab
+from matplotlib import pyplot as plt
 
 from constants import *
 
@@ -29,8 +33,14 @@ class MarioKart:
             ram = self.env.get_ram()
             action = self.env.action_space.sample()
             action = [1, 0, 0, 0, 0, 0, 1, 0, 0]
-            self.env.step(action)
-            self.env.render()
+
+            ob, rw, done, inf = self.env.step(action)
+
+            rgb_array = self.env.render(mode="rgb_array")
+            rgb_array = np.swapaxes(rgb_array, 0, 1)
+            new_surf = pygame.pixelcopy.make_surface(rgb_array)
+            new_surf = pygame.transform.scale(new_surf, (500, 500))
+            self.window.blit(new_surf, (25, 25))
 
             pygame.display.update()
             self.fps_clock.tick(MAX_FPS)
