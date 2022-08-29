@@ -13,6 +13,9 @@ class MarioKart:
         self.fps_clock = pygame.time.Clock()
         self.running = True
 
+        self.env = retro.make('SuperMarioKart-Snes')
+        self.env.reset()
+
     def process_events(self):
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
@@ -20,22 +23,14 @@ class MarioKart:
                     self.running = False
 
     def run(self):
-        env = retro.make('SuperMarioKart-Snes')
-        env.reset()
-
         while self.running:
             self.window.fill(WHITE)
 
-            ram = env.get_ram()
-            action = env.action_space.sample()
-            buttons = env.buttons
-
-            print(buttons)
-            print(action)
-
-            action = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-            env.step(action)
-            env.render()
+            ram = self.env.get_ram()
+            action = self.env.action_space.sample()
+            action = [1, 0, 0, 0, 0, 0, 1, 0, 0]
+            self.env.step(action)
+            self.env.render()
 
             pygame.display.update()
             self.fps_clock.tick(MAX_FPS)
