@@ -63,22 +63,21 @@ class MarioKart:
             self.window.fill(WHITE)
 
             self.process_events()
-
             self.env.step(pressed_key)
-
             rgb_array = self.env.render(mode="rgb_array")
-
             self.draw_game_windows(rgb_array)
 
             pygame.display.update()
             self.fps_clock.tick(MAX_FPS)
 
     def draw_game_windows(self, rgb_array):
+        # draw game window from np array
         game_window = np.swapaxes(rgb_array, 0, 1)
         new_surf = pygame.pixelcopy.make_surface(game_window)
         new_surf = pygame.transform.scale2x(new_surf)
         self.window.blit(new_surf, (25, 25))
 
+        # draw input image , grayscale and resized to 17x17
         gray = rgb_array[:][25:70][:]
         gray = cv2.resize(gray, (17, 17))
         gray = gray_conversion(gray)
