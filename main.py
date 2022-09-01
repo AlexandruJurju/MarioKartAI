@@ -79,17 +79,45 @@ class MarioKart:
         # gray_surf = pygame.pixelcopy.make_surface(gray_window)
         # gray_surf = pygame.transform.scale(gray_surf, (200, 200))
         # self.window.blit(gray_surf, (650, 200))
-    
+
+    def activated_buttons_from_action(self, action: []):
+        pass
+
     def draw_snes_controller(self, action: []):
-        base_x = 500
-        base_y = 500
-        square_width = 40
-        square_height = 20
+        square_base_x = 500
+        square_base_y = 500
+        square_width = 35
+        square_height = 50
+        square_distance = 75
+
+        circle_base_x = square_base_x + square_distance * 5
+        circle_base_y = 550
+        circle_radius = 20
+        circle_distance = 65
 
         # LEFT
-        pygame.draw.rect(self.window, (0, 0, 0), pygame.Rect(base_x, base_y, square_width, square_height))
+        pygame.draw.rect(self.window, BLACK, pygame.Rect(square_base_x, square_base_y, square_width, square_height))
 
         # RIGHT
+        pygame.draw.rect(self.window, BLACK, pygame.Rect(square_base_x + square_distance * 2, square_base_y, square_width, square_height))
+
+        # UP
+        pygame.draw.rect(self.window, BLACK, pygame.Rect(square_base_x + square_distance, square_base_y - square_distance, square_width, square_height))
+
+        # DOWN
+        pygame.draw.rect(self.window, BLACK, pygame.Rect(square_base_x + square_distance, square_base_y + square_distance, square_width, square_height))
+
+        # Y CIRCLE
+        pygame.draw.circle(self.window, BLACK, (circle_base_x, circle_base_y), circle_radius)
+
+        # X CIRCLE
+        pygame.draw.circle(self.window, BLACK, (circle_base_x + circle_distance, circle_base_y - circle_distance), circle_radius)
+
+        # B CIRCLE
+        pygame.draw.circle(self.window, BLACK, (circle_base_x + circle_distance, circle_base_y + circle_distance), circle_radius)
+
+        # A CIRCLE
+        pygame.draw.circle(self.window, BLACK, (circle_base_x + circle_distance + circle_distance, circle_base_y), circle_radius)
 
 
 # Press the green button in the gutter to run the script.
