@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 
 from constants import *
 
-player_action = [1, 0, 0, 0, 0, 0, 0, 0, 0]
+player_action = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
 
 def gray_conversion(image):
@@ -35,9 +35,6 @@ class MarioKart:
 
         self.env = retro.make('SuperMarioKart-Snes')
         observation = self.env.reset()
-
-        self.font = pygame.font.SysFont("arial", 25)
-
         print(self.env.buttons)
 
     def process_events(self):
@@ -47,11 +44,11 @@ class MarioKart:
                 if event.key == pygame.K_ESCAPE:
                     self.running = False
                 if event.key == pygame.K_UP:
-                    player_action = [1, 0, 0, 0, 0, 0, 0, 0, 0]
+                    player_action = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
                 if event.key == pygame.K_RIGHT:
-                    player_action = [1, 0, 0, 0, 0, 0, 0, 1, 0]
+                    player_action = [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]
                 if event.key == pygame.K_LEFT:
-                    player_action = [1, 0, 0, 0, 0, 0, 1, 0, 0]
+                    player_action = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
 
     def run(self):
         while self.running:
@@ -82,44 +79,56 @@ class MarioKart:
         # gray_surf = pygame.transform.scale(gray_surf, (200, 200))
         # self.window.blit(gray_surf, (650, 200))
 
-    def activated_buttons_from_action(self, action: []):
-        pass
-
     def draw_snes_controller(self, action: []):
-        square_base_x = 500
+        square_base_x = 600
         square_base_y = 500
         square_width = 35
         square_height = 50
-        square_distance = 65
+        square_distance = 60
 
         circle_base_x = square_base_x + square_distance * 4
-        circle_base_y = 525
+        circle_base_y = square_base_y + 25
         circle_radius = 20
         circle_distance = 65
 
+        controller_left_corner = (square_base_x - 25, square_base_y - 100)
+        controller_width_height = ((circle_base_x + circle_distance) - square_base_x + square_distance + circle_distance, square_height * 5)
+
+        pygame.draw.rect(self.window, (0, 125, 200), pygame.Rect(controller_left_corner, controller_width_height))
+
+        # get a map of form BUTTON : 0 if buttons is not pressed, 1 if button is pressed
+        buttons = self.env.buttons
+        colors = {}
+        for i, button in enumerate(buttons):
+            # colors[button] = action[i]
+            if action[i] == 1:
+                colors[button] = GREEN
+            else:
+                colors[button] = BLACK
+
         # LEFT
-        pygame.draw.rect(self.window, BLACK, pygame.Rect(square_base_x, square_base_y, square_width, square_height))
+        pygame.draw.rect(self.window, colors["LEFT"], pygame.Rect(square_base_x, square_base_y, square_width, square_height))
 
         # RIGHT
-        pygame.draw.rect(self.window, BLACK, pygame.Rect(square_base_x + square_distance * 2, square_base_y, square_width, square_height))
+        pygame.draw.rect(self.window, colors["RIGHT"], pygame.Rect(square_base_x + square_distance * 2, square_base_y, square_width, square_height))
 
         # UP
-        pygame.draw.rect(self.window, BLACK, pygame.Rect(square_base_x + square_distance, square_base_y - square_distance, square_width, square_height))
+        pygame.draw.rect(self.window, colors["UP"], pygame.Rect(square_base_x + square_distance, square_base_y - square_distance, square_width, square_height))
 
         # DOWN
-        pygame.draw.rect(self.window, BLACK, pygame.Rect(square_base_x + square_distance, square_base_y + square_distance, square_width, square_height))
+        pygame.draw.rect(self.window, colors["DOWN"], pygame.Rect(square_base_x + square_distance, square_base_y + square_distance, square_width, square_height))
 
         # Y CIRCLE
-        pygame.draw.circle(self.window, BLACK, (circle_base_x, circle_base_y), circle_radius)
+        pygame.draw.circle(self.window, colors["Y"], (circle_base_x, circle_base_y), circle_radius)
 
         # X CIRCLE
-        pygame.draw.circle(self.window, BLACK, (circle_base_x + circle_distance, circle_base_y - circle_distance), circle_radius)
+        pygame.draw.circle(self.window, colors["X"], (circle_base_x + circle_distance, circle_base_y - circle_distance), circle_radius)
 
         # B CIRCLE
-        pygame.draw.circle(self.window, BLACK, (circle_base_x + circle_distance, circle_base_y + circle_distance), circle_radius)
+        pygame.draw.circle(self.window, colors["B"], (circle_base_x + circle_distance, circle_base_y + circle_distance), circle_radius)
 
         # A CIRCLE
-        pygame.draw.circle(self.window, BLACK, (circle_base_x + circle_distance + circle_distance, circle_base_y), circle_radius)
+        pygame.draw.circle(self.window, colors["Y"], (circle_base_x + circle_distance + circle_distance, circle_base_y), circle_radius)
 
 
 # Press the green button in the gutter to run the script.
