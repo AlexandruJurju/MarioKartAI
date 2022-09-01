@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 
 from constants import *
 
-pressed_key = [1, 0, 0, 0, 0, 0, 0, 0, 0]
+player_action = [1, 0, 0, 0, 0, 0, 0, 0, 0]
 
 
 def gray_conversion(image):
@@ -24,15 +24,6 @@ def gray_conversion(image):
     return image
 
 
-def smech_gray(val, min, max):
-    if val > max:
-        val = max
-    if val < min:
-        val = min
-    g = math.floor((val - min) / (max - min) * 255)
-    return g, g, g
-
-
 class MarioKart:
     def __init__(self):
         pygame.init()
@@ -43,29 +34,32 @@ class MarioKart:
         self.running = True
 
         self.env = retro.make('SuperMarioKart-Snes')
-        self.env.reset()
+        observation = self.env.reset()
+
+        print(self.env.buttons)
 
     def process_events(self):
-        global pressed_key
+        global player_action
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     self.running = False
                 if event.key == pygame.K_UP:
-                    pressed_key = [1, 0, 0, 0, 0, 0, 0, 0, 0]
+                    player_action = [1, 0, 0, 0, 0, 0, 0, 0, 0]
                 if event.key == pygame.K_RIGHT:
-                    pressed_key = [1, 0, 0, 0, 0, 0, 0, 1, 0]
+                    player_action = [1, 0, 0, 0, 0, 0, 0, 1, 0]
                 if event.key == pygame.K_LEFT:
-                    pressed_key = [1, 0, 0, 0, 0, 0, 1, 0, 0]
+                    player_action = [1, 0, 0, 0, 0, 0, 1, 0, 0]
 
     def run(self):
         while self.running:
             self.window.fill(WHITE)
-
             self.process_events()
-            self.env.step(pressed_key)
+
+            self.draw_snes_controller(player_action)
+            observation, reward, done, info = self.env.step(player_action)
             rgb_array = self.env.render(mode="rgb_array")
-            self.draw_game_windows(rgb_array)
+            self.draw_game_windows(observation)
 
             pygame.display.update()
             self.fps_clock.tick(MAX_FPS)
@@ -78,13 +72,24 @@ class MarioKart:
         self.window.blit(new_surf, (25, 25))
 
         # draw input image , grayscale and resized to 17x17
-        gray = rgb_array[:][25:70][:]
-        gray = cv2.resize(gray, (17, 17))
-        gray = gray_conversion(gray)
-        gray_window = np.swapaxes(gray, 0, 1)
-        gray_surf = pygame.pixelcopy.make_surface(gray_window)
-        gray_surf = pygame.transform.scale(gray_surf, (200, 200))
-        self.window.blit(gray_surf, (650, 200))
+        # gray = rgb_array[:][25:70][:]
+        # gray = cv2.resize(gray, (17, 17))
+        # gray = gray_conversion(gray)
+        # gray_window = np.swapaxes(gray, 0, 1)
+        # gray_surf = pygame.pixelcopy.make_surface(gray_window)
+        # gray_surf = pygame.transform.scale(gray_surf, (200, 200))
+        # self.window.blit(gray_surf, (650, 200))
+    
+    def draw_snes_controller(self, action: []):
+        base_x = 500
+        base_y = 500
+        square_width = 40
+        square_height = 20
+
+        # LEFT
+        pygame.draw.rect(self.window, (0, 0, 0), pygame.Rect(base_x, base_y, square_width, square_height))
+
+        # RIGHT
 
 
 # Press the green button in the gutter to run the script.
