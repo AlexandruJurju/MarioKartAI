@@ -120,6 +120,7 @@ class SurfaceTypes(Enum):
 
 surface_type = 0x10AE
 tile_surface_type_table = 0x0B00
+tile_sprite_map = 0x10000
 
 top_global_x = 0x0088
 top_global_y = 0x008C
@@ -151,10 +152,25 @@ def get_lap(ram: np.ndarray):
     return ram[lapnumber_code] - 127
 
 
+def get_surface_name(tile: int):
+    for surface in SurfaceTypes:
+        if tile == surface.value[0]:
+            return surface
+
+
 def get_surface_physics(tile: int):
     for surface in SurfaceTypes:
         if tile == surface.value[0]:
             return surface.value[1]
+
+
+def get_track(ram: np.ndarray):
+    track = {}
+    for i in range(1, 128):
+        for j in range(81, 209):
+            tile = ram[tile_sprite_map + ((i - 1) + (j - 1) * 128)]
+            track[(i, j)] = get_surface_physics(ram[tile_surface_type_table + tile])
+    return track
 
 
 class MarioKart:
@@ -166,7 +182,7 @@ class MarioKart:
         self.fps_clock = pygame.time.Clock()
         self.running = True
 
-        self.env = retro.make('SuperMarioKart-Snes')
+        self.env = retro.make('SuperMarioKart-Snes', state="GhostValley3_M")
         observation = self.env.reset()
 
         print(self.env.buttons)
@@ -185,18 +201,19 @@ class MarioKart:
                     player_action = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
 
     def run(self):
+
+        self.draw_track(get_track(self.env.get_ram()))
+
         while self.running:
-            self.window.fill(WHITE)
+            # self.window.fill(WHITE)
             self.process_events()
 
             observation, reward, done, info = self.env.step(player_action)
             ram = self.env.get_ram()
             rgb_array = self.env.render(mode="rgb_array")
 
-            tile = ram[surface_type]
-
             self.draw_game_windows(observation)
-            self.draw_snes_controller(player_action)
+            # self.draw_snes_controller(player_action)
 
             pygame.display.update()
             self.fps_clock.tick(MAX_FPS)
@@ -268,8 +285,16 @@ class MarioKart:
         # A CIRCLE
         pygame.draw.circle(self.window, colors["Y"], (circle_base_x + circle_distance + circle_distance, circle_base_y), circle_radius)
 
-    def draw_course(self, ran: np.ndarray):
-        pass
+    def draw_track(self, track: {}):
+        square_size = 2
+        for i in range(1, 128):
+            for j in range(81, 209):
+                if track[(i, j)] == 1:
+                    pygame.draw.rect(self.window, WHITE, pygame.Rect(600 + i * square_size, 100 + j * square_size, square_size, square_size))
+                elif track[(i, j)] > 1:
+                    pygame.draw.rect(self.window, GREEN, pygame.Rect(600 + i * square_size, 100 + j * square_size, square_size, square_size))
+                elif track[(i, j)] < 1:
+                    pygame.draw.rect(self.window, RED, pygame.Rect(600 + i * square_size, 100 + j * square_size, square_size, square_size))
 
 
 if __name__ == '__main__':
