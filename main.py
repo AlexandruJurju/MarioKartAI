@@ -1,27 +1,138 @@
-import math
-
-import cv2
 import numpy as np
 import retro
 import pygame
-from PIL import ImageGrab
-from matplotlib import pyplot as plt
+from enum import Enum
 
 from constants import *
 
-player_action = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+player_action = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+# ENUM for items ???
+# nothing = (0,60)
+# mushroom = (0,52)
+# feather = (1,52)
+# star = (2,56)
+# banana = (3,56)
+# green shell = (4,48)
+# red shell = (5,52)
+# coin = (7,56)
+# lightning = (8,56)
+# selecting/spinning = (0-8,?)
+items = (0x0D70, 0x0C69)
+
+# Enum for statuses ?
+# on the ground = 0
+# jump/hop/ramp = 2
+# fallen off edge = 4
+# in lava = 6
+# in deep water = 8
+status_flag = 0x10A0
 
 
-def gray_conversion(image):
-    height, width, channel = image.shape
-    for i in range(0, height):
-        for j in range(0, width):
-            blue_component = image[i][j][0]
-            green_component = image[i][j][1]
-            red_component = image[i][j][2]
-            gray_value = 0.07 * blue_component + 0.72 * green_component + 0.21 * red_component
-            image[i][j] = gray_value
-    return image
+class Statuses(Enum):
+    on_ground = 0
+    jump_hop_ram = 2
+    fallen_off_edge = 4
+    in_lava = 6
+    in_deep_water = 8
+
+
+checkpoint = 0x10C0
+clock = 0x0101
+coins = 0x0E00
+direction = 0x95
+race_position = 0x1040
+flow = 0x10D0
+
+game_mode = 0x00B5
+
+# Lap number, two variables, both unsigned bytes:
+# byte 7E10C1 = lap you're currently on
+# byte 7E10F9 = maximum lap you've reached
+# 0 = 127
+# 1 = 128
+# 2 = 129
+# 3 = 130
+# 4 = 131
+# 5 = 132
+# finished = 133
+lapnumber_code = 0x10C1
+lapsize = 0x0148
+
+max_speed = 0x10D6
+player_speed = 0x10EA
+spinout_code = 0x10A6
+track_number = 0x0124
+race_cc = 0x0030
+
+
+# ENUM for surfaces
+# unused power up square = 20
+# deep water = 34
+# mario circuit road / ghost valley road / used power up square / rainbow road = 64
+# bowser castle = 68
+# doughnut plains track = 70
+# koopa beach sand = 74
+# choco island track = 76
+# ghost valley rough bit / bowser castle rough bit / ice = 78
+# choco island bridges = 80
+# choco island slightly rough bit of track = 82
+# mario circuit off-road = 84
+# choco island off-road = 86
+# snow = 88
+# koopa beach bushes / doughnut plains grass = 90
+# shallow-water = 92
+# mud puddle = 94
+class SurfaceTypes(Enum):
+    unused = 20
+    deep_water = 34
+    circuit_ghost_power_square_rainbow_roads = 64
+    bowser_castle = 68
+    doughnut_plains_track = 70
+    koopa_beach_sand = 74
+    choco_track = 76
+    ghost_rough_bowser_rough_ice = 78
+    choco_bridge = 80
+    choco_rough = 82
+    circuit_offroad = 84
+    choco_offroad = 86
+    snow = 88
+    koopa_bush_doughnut_grass = 90
+    shallow_water = 92
+    mud = 94
+
+
+surface_type = 0x10AE
+tile_surface_type_table = 0x0B00
+
+top_global_x = 0x0088
+top_global_y = 0x008C
+bottom_global_x = 0x008A
+bottom_global_y = 0x008E
+
+tile_size = 32
+
+
+def get_position(player: int, ram: np.ndarray):
+    if player == 1:
+        kart_x = ram[top_global_x]
+        kart_y = ram[top_global_y]
+
+        kart_direction = ram[direction]
+        kart_speed = ram[player_speed]
+
+    else:
+        kart_x = ram[top_global_x]
+        kart_y = ram[top_global_y]
+
+        kart_direction = ram[direction]
+        kart_speed = ram[player_speed]
+
+    return kart_x, kart_y
+
+
+def get_lap(ram: np.ndarray):
+    return ram[lapnumber_code] - 127
 
 
 class MarioKart:
@@ -35,6 +146,7 @@ class MarioKart:
 
         self.env = retro.make('SuperMarioKart-Snes')
         observation = self.env.reset()
+
         print(self.env.buttons)
 
     def process_events(self):
@@ -55,10 +167,12 @@ class MarioKart:
             self.window.fill(WHITE)
             self.process_events()
 
-            self.draw_snes_controller(player_action)
             observation, reward, done, info = self.env.step(player_action)
+            ram = self.env.get_ram()
             rgb_array = self.env.render(mode="rgb_array")
+
             self.draw_game_windows(observation)
+            self.draw_snes_controller(player_action)
 
             pygame.display.update()
             self.fps_clock.tick(MAX_FPS)
@@ -82,9 +196,9 @@ class MarioKart:
     def draw_snes_controller(self, action: []):
         square_base_x = 600
         square_base_y = 500
-        square_width = 35
+        square_width = 50
         square_height = 50
-        square_distance = 60
+        square_distance = 65
 
         circle_base_x = square_base_x + square_distance * 4
         circle_base_y = square_base_y + 25
@@ -130,8 +244,10 @@ class MarioKart:
         # A CIRCLE
         pygame.draw.circle(self.window, colors["Y"], (circle_base_x + circle_distance + circle_distance, circle_base_y), circle_radius)
 
+    def draw_course(self, ran: np.ndarray):
+        pass
 
-# Press the green button in the gutter to run the script.
+
 if __name__ == '__main__':
     game = MarioKart()
     game.run()
