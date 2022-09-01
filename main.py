@@ -151,6 +151,12 @@ def get_lap(ram: np.ndarray):
     return ram[lapnumber_code] - 127
 
 
+def get_surface_physics(tile: int):
+    for surface in SurfaceTypes:
+        if tile == surface.value[0]:
+            return surface.value[1]
+
+
 class MarioKart:
     def __init__(self):
         pygame.init()
@@ -186,6 +192,8 @@ class MarioKart:
             observation, reward, done, info = self.env.step(player_action)
             ram = self.env.get_ram()
             rgb_array = self.env.render(mode="rgb_array")
+
+            tile = ram[surface_type]
 
             self.draw_game_windows(observation)
             self.draw_snes_controller(player_action)
