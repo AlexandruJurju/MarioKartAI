@@ -36,6 +36,8 @@ class MarioKart:
         self.env = retro.make('SuperMarioKart-Snes')
         observation = self.env.reset()
 
+        self.font = pygame.font.SysFont("arial", 25)
+
         print(self.env.buttons)
 
     def process_events(self):
@@ -88,10 +90,10 @@ class MarioKart:
         square_base_y = 500
         square_width = 35
         square_height = 50
-        square_distance = 75
+        square_distance = 65
 
-        circle_base_x = square_base_x + square_distance * 5
-        circle_base_y = 550
+        circle_base_x = square_base_x + square_distance * 4
+        circle_base_y = 525
         circle_radius = 20
         circle_distance = 65
 
