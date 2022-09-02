@@ -358,13 +358,14 @@ class MarioKart:
                 map_y = mario_position[1] + y
 
                 if map_x < 0 or map_y < 0 or map_x > 127 or map_y > 127:
+                    pygame.draw.rect(self.window, (0, 0, 0), pygame.Rect(650 + square_size * x, 200 + square_size * y, square_size, square_size))
                     break
                 if model[map_x][map_y] == 1:
                     pygame.draw.rect(self.window, (0, 255, 0), pygame.Rect(650 + square_size * x, 200 + square_size * y, square_size, square_size))
                 if model[map_x][map_y] == 0:
                     pygame.draw.rect(self.window, (128, 128, 128), pygame.Rect(650 + square_size * x, 200 + square_size * y, square_size, square_size))
                 if model[map_x][map_y] == -1:
-                    pygame.draw.rect(self.window, (255, 0, 0), pygame.Rect(650 + square_size * x, 200 + square_size * y, square_size, square_size))
+                    pygame.draw.rect(self.window, (0, 0, 0), pygame.Rect(650 + square_size * x, 200 + square_size * y, square_size, square_size))
 
         pygame.draw.rect(self.window, (0, 0, 255), pygame.Rect(650, 200, square_size, square_size))
 
