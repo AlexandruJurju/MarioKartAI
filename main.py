@@ -183,17 +183,22 @@ def get_camera_facing_angle(ram: np.ndarray) -> int:
 
 
 def get_course_model(ram: np.ndarray) -> {}:
-    course = {}
+    course = np.zeros((128, 128))
     for i in range(1, 128):
         for j in range(81, 209):
             tile = ram[tile_sprite_map + ((i - 1) + (j - 1) * 128)]
-            course[(i - 1, j - 81)] = get_surface_physics(ram[tile_surface_type_table + tile])
+            course[i - 1][j - 81] = get_surface_physics(ram[tile_surface_type_table + tile])
 
-    model = numpy.zeros((127, 127))
+    model = numpy.zeros((128, 128))
 
-    for i in range(127):
-        for j in range(127):
-            model[i][j] = course[(i, j)]
+    for i in range(128):
+        for j in range(128):
+            if course[i][j] == 1:
+                model[i, j] = 0
+            if course[i][j] < 1:
+                model[i, j] = -1
+            if course[i][j] > 1:
+                model[i, j] = 1
 
     return model
 
@@ -251,12 +256,14 @@ class MarioKart:
         model = get_course_model(self.env.get_ram())
 
         while self.running:
-            self.window.fill(BLUE)
+            self.window.fill(WHITE)
             self.process_events()
 
             observation, reward, done, info = self.env.step(player_action)
             ram = self.env.get_ram()
             rgb_array = self.env.render(mode="rgb_array")
+
+            print(info["kart1_direction"])
 
             self.draw_game_windows(observation)
             self.draw_minimal_view(model, get_info_kart_position_to_matrix_index(info))
@@ -344,17 +351,22 @@ class MarioKart:
 
     def draw_minimal_view(self, model: [], mario_position: typing.Tuple):
         square_size = 3
+
         for x in range(-10, 10):
-            for y in range(15):
+            for y in range(-10, 10):
                 map_x = mario_position[0] + x
                 map_y = mario_position[1] + y
 
-                if model[map_x][map_y] > 1:
-                    pygame.draw.rect(self.window, (255, 255, 255), pygame.Rect(650 + square_size * x, 200 + square_size * y, square_size, square_size))
+                if map_x < 0 or map_y < 0 or map_x > 127 or map_y > 127:
+                    break
+                if model[map_x][map_y] == 1:
+                    pygame.draw.rect(self.window, (0, 255, 0), pygame.Rect(650 + square_size * x, 200 + square_size * y, square_size, square_size))
                 if model[map_x][map_y] == 0:
                     pygame.draw.rect(self.window, (128, 128, 128), pygame.Rect(650 + square_size * x, 200 + square_size * y, square_size, square_size))
-                if model[map_x][map_y] < 0:
+                if model[map_x][map_y] == -1:
                     pygame.draw.rect(self.window, (255, 0, 0), pygame.Rect(650 + square_size * x, 200 + square_size * y, square_size, square_size))
+
+        pygame.draw.rect(self.window, (0, 0, 255), pygame.Rect(650, 200, square_size, square_size))
 
 
 if __name__ == '__main__':
