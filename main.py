@@ -251,7 +251,7 @@ class MarioKart:
         model = get_course_model(self.env.get_ram())
 
         while self.running:
-            # self.window.fill(WHITE)
+            self.window.fill(BLUE)
             self.process_events()
 
             observation, reward, done, info = self.env.step(player_action)
@@ -259,6 +259,7 @@ class MarioKart:
             rgb_array = self.env.render(mode="rgb_array")
 
             self.draw_game_windows(observation)
+            self.draw_minimal_view(model, get_info_kart_position_to_matrix_index(info))
             # self.draw_snes_controller(player_action)
 
             pygame.display.update()
@@ -340,6 +341,20 @@ class MarioKart:
                     pygame.draw.rect(self.window, (128, 128, 128), pygame.Rect(650 + 2 * i, 200 + 2 * j, 2, 2))
                 else:
                     pygame.draw.rect(self.window, (255, 255, 255), pygame.Rect(650 + 2 * i, 200 + 2 * j, 2, 2))
+
+    def draw_minimal_view(self, model: [], mario_position: typing.Tuple):
+        square_size = 3
+        for x in range(-10, 10):
+            for y in range(15):
+                map_x = mario_position[0] + x
+                map_y = mario_position[1] + y
+
+                if model[map_x][map_y] > 1:
+                    pygame.draw.rect(self.window, (255, 255, 255), pygame.Rect(650 + square_size * x, 200 + square_size * y, square_size, square_size))
+                if model[map_x][map_y] == 0:
+                    pygame.draw.rect(self.window, (128, 128, 128), pygame.Rect(650 + square_size * x, 200 + square_size * y, square_size, square_size))
+                if model[map_x][map_y] < 0:
+                    pygame.draw.rect(self.window, (255, 0, 0), pygame.Rect(650 + square_size * x, 200 + square_size * y, square_size, square_size))
 
 
 if __name__ == '__main__':
