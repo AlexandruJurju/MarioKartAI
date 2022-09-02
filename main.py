@@ -1,3 +1,6 @@
+import typing
+
+import numpy
 import numpy as np
 import retro
 import pygame
@@ -37,15 +40,6 @@ class Statuses(Enum):
     in_deep_water = 8
 
 
-checkpoint = 0x10C0
-clock = 0x0101
-coins = 0x0E00
-direction = 0x95
-race_position = 0x1040
-flow = 0x10D0
-
-game_mode = 0x00B5
-
 # Lap number, two variables, both unsigned bytes:
 # byte 7E10C1 = lap you're currently on
 # byte 7E10F9 = maximum lap you've reached
@@ -59,6 +53,13 @@ game_mode = 0x00B5
 lapnumber_code = 0x10C1
 lapsize = 0x0148
 
+checkpoint = 0x10C0
+clock = 0x0101
+coins = 0x0E00
+camera_facing_angle = 0x95
+race_position = 0x1040
+is_going_backward = 0x10B
+game_mode = 0x00B5
 max_speed = 0x10D6
 player_speed = 0x10EA
 spinout_code = 0x10A6
@@ -135,42 +136,88 @@ def get_position(player: int, ram: np.ndarray):
         kart_x = ram[top_global_x]
         kart_y = ram[top_global_y]
 
-        kart_direction = ram[direction]
+        kart_direction = ram[camera_facing_angle]
         kart_speed = ram[player_speed]
 
     else:
         kart_x = ram[top_global_x]
         kart_y = ram[top_global_y]
 
-        kart_direction = ram[direction]
+        kart_direction = ram[camera_facing_angle]
         kart_speed = ram[player_speed]
 
     return kart_x, kart_y
 
 
-def get_lap(ram: np.ndarray):
+def get_track_number(ram: np.ndarray) -> int:
+    return ram[track_number]
+
+
+def get_lap(ram: np.ndarray) -> int:
     return ram[lapnumber_code] - 127
 
 
-def get_surface_name(tile: int):
+def get_surface_name(tile: int) -> SurfaceTypes:
     for surface in SurfaceTypes:
         if tile == surface.value[0]:
             return surface
 
 
-def get_surface_physics(tile: int):
+def get_surface_physics(tile: int) -> int:
     for surface in SurfaceTypes:
         if tile == surface.value[0]:
             return surface.value[1]
 
 
-def get_track(ram: np.ndarray):
-    track = {}
+def is_going_backwards(ram: np.ndarray) -> bool:
+    kart_flow = ram[is_going_backward]
+    if kart_flow == 0:
+        return False
+    else:
+        return True
+
+
+def get_camera_facing_angle(ram: np.ndarray) -> int:
+    direction = ram[camera_facing_angle]
+    return direction
+
+
+def get_course_model(ram: np.ndarray) -> {}:
+    course = {}
     for i in range(1, 128):
         for j in range(81, 209):
             tile = ram[tile_sprite_map + ((i - 1) + (j - 1) * 128)]
-            track[(i, j)] = get_surface_physics(ram[tile_surface_type_table + tile])
-    return track
+            course[(i - 1, j - 81)] = get_surface_physics(ram[tile_surface_type_table + tile])
+
+    model = numpy.zeros((127, 127))
+
+    for i in range(127):
+        for j in range(127):
+            model[i][j] = course[(i, j)]
+
+    return model
+
+
+def get_info_kart_position(info: {}):
+    return info["kart1_X"], info["kart1_Y"]
+
+
+def get_info_kart_position_to_matrix_index(info: {}):
+    position = get_info_kart_position(info)
+
+    return position[0] // tile_size, position[1] // tile_size
+
+
+def get_info_current_frame(info: {}):
+    return info["getFrame"]
+
+
+def get_info_current_checkpoint(info: {}):
+    return info["current_checkpoint"]
+
+
+def get_info_prev_checkpoint(info: {}):
+    return info["prevCheckpoint"]
 
 
 class MarioKart:
@@ -182,7 +229,7 @@ class MarioKart:
         self.fps_clock = pygame.time.Clock()
         self.running = True
 
-        self.env = retro.make('SuperMarioKart-Snes', state="GhostValley3_M")
+        self.env = retro.make('SuperMarioKart-Snes', state="MarioCircuit_M")
         observation = self.env.reset()
 
         print(self.env.buttons)
@@ -201,8 +248,7 @@ class MarioKart:
                     player_action = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
 
     def run(self):
-
-        self.draw_track(get_track(self.env.get_ram()))
+        model = get_course_model(self.env.get_ram())
 
         while self.running:
             # self.window.fill(WHITE)
@@ -285,16 +331,15 @@ class MarioKart:
         # A CIRCLE
         pygame.draw.circle(self.window, colors["Y"], (circle_base_x + circle_distance + circle_distance, circle_base_y), circle_radius)
 
-    def draw_track(self, track: {}):
-        square_size = 2
-        for i in range(1, 128):
-            for j in range(81, 209):
-                if track[(i, j)] == 1:
-                    pygame.draw.rect(self.window, WHITE, pygame.Rect(600 + i * square_size, 100 + j * square_size, square_size, square_size))
-                elif track[(i, j)] > 1:
-                    pygame.draw.rect(self.window, GREEN, pygame.Rect(600 + i * square_size, 100 + j * square_size, square_size, square_size))
-                elif track[(i, j)] < 1:
-                    pygame.draw.rect(self.window, RED, pygame.Rect(600 + i * square_size, 100 + j * square_size, square_size, square_size))
+    def draw_model(self, model: []):
+        for i in range(127):
+            for j in range(127):
+                if model[i][j] < 0:
+                    pygame.draw.rect(self.window, (255, 0, 0), pygame.Rect(650 + 2 * i, 200 + 2 * j, 2, 2))
+                elif model[i][j] == 0:
+                    pygame.draw.rect(self.window, (128, 128, 128), pygame.Rect(650 + 2 * i, 200 + 2 * j, 2, 2))
+                else:
+                    pygame.draw.rect(self.window, (255, 255, 255), pygame.Rect(650 + 2 * i, 200 + 2 * j, 2, 2))
 
 
 if __name__ == '__main__':
