@@ -263,10 +263,8 @@ class MarioKart:
             ram = self.env.get_ram()
             rgb_array = self.env.render(mode="rgb_array")
 
-            print(info["kart1_direction"])
-
             self.draw_game_windows(observation)
-            self.draw_minimal_view(model, get_info_kart_position_to_matrix_index(info))
+            self.draw_minimal_view(model, get_info_kart_position_to_matrix_index(info), info["kart1_direction"])
             # self.draw_snes_controller(player_action)
 
             pygame.display.update()
@@ -349,22 +347,51 @@ class MarioKart:
                 else:
                     pygame.draw.rect(self.window, (255, 255, 255), pygame.Rect(650 + 2 * i, 200 + 2 * j, 2, 2))
 
-    def draw_minimal_view(self, model: [], mario_position: typing.Tuple):
-        square_size = 10
-        view_model = np.zeros((21, 21))
+    def resize_range(self, old_max, old_min, new_max, new_min, old_value):
+        old_range = (old_max - old_min)
+        new_range = (new_max - new_min)
+        new_value = (((old_value - old_min) * new_range) / old_range) + new_min
+        return new_value
 
-        for x in range(-10, 10):
-            for y in range(-10, 10):
-                map_x = mario_position[0] + x
-                map_y = mario_position[1] + y
+    def game_coord_to_circle(self, game_angle):
+
+        quadrant = 0
+        if 0 <= game_angle <= 64:
+            quadrant = 1
+        if 192 <= game_angle <= 256:
+            quadrant = 2
+        if 128 <= game_angle <= 192:
+            quadrant = 3
+        if 64 <= game_angle <= 128:
+            quadrant = 4
+
+        if quadrant == 1:
+            return self.resize_range(0, 64, 90, 0, game_angle)
+        if quadrant == 2:
+            return self.resize_range(192, 256, 180, 90, game_angle)
+        if quadrant == 3:
+            return self.resize_range(128, 192, 270, 180, game_angle)
+        if quadrant == 4:
+            return self.resize_range(64, 128, 360, 270, game_angle)
+
+    def draw_minimal_view(self, model: [], mario_position: typing.Tuple, direction: int):
+        square_size = 10
+        view_model = np.zeros((MINIMAL_VIEW_SIZE, MINIMAL_VIEW_SIZE))
+
+        print(self.game_coord_to_circle(direction))
+
+        for x in range(-MINIMAL_VIEW_SIZE // 2, MINIMAL_VIEW_SIZE // 2):
+            for y in range(-MINIMAL_VIEW_SIZE // 2, MINIMAL_VIEW_SIZE // 2):
+                map_x = (mario_position[0] + x)
+                map_y = (mario_position[1] + y)
 
                 if (0 < map_x < 127) and (0 < map_y < 127):
                     view_model[x][y] = model[map_x][map_y]
                 else:
                     view_model[x][y] = -1
 
-        for x in range(-10, 10):
-            for y in range(-10, 10):
+        for x in range(-MINIMAL_VIEW_SIZE // 2, MINIMAL_VIEW_SIZE // 2):
+            for y in range(-MINIMAL_VIEW_SIZE // 2, MINIMAL_VIEW_SIZE // 2):
                 if view_model[x][y] == 1:
                     pygame.draw.rect(self.window, (0, 255, 0), pygame.Rect(650 + square_size * x, 200 + square_size * y, square_size, square_size))
                 if view_model[x][y] == 0:
