@@ -350,21 +350,26 @@ class MarioKart:
                     pygame.draw.rect(self.window, (255, 255, 255), pygame.Rect(650 + 2 * i, 200 + 2 * j, 2, 2))
 
     def draw_minimal_view(self, model: [], mario_position: typing.Tuple):
-        square_size = 3
+        square_size = 10
+        view_model = np.zeros((21, 21))
 
         for x in range(-10, 10):
             for y in range(-10, 10):
                 map_x = mario_position[0] + x
                 map_y = mario_position[1] + y
 
-                if map_x < 0 or map_y < 0 or map_x > 127 or map_y > 127:
-                    pygame.draw.rect(self.window, (0, 0, 0), pygame.Rect(650 + square_size * x, 200 + square_size * y, square_size, square_size))
-                    break
-                if model[map_x][map_y] == 1:
+                if (0 < map_x < 127) and (0 < map_y < 127):
+                    view_model[x][y] = model[map_x][map_y]
+                else:
+                    view_model[x][y] = -1
+
+        for x in range(-10, 10):
+            for y in range(-10, 10):
+                if view_model[x][y] == 1:
                     pygame.draw.rect(self.window, (0, 255, 0), pygame.Rect(650 + square_size * x, 200 + square_size * y, square_size, square_size))
-                if model[map_x][map_y] == 0:
+                if view_model[x][y] == 0:
                     pygame.draw.rect(self.window, (128, 128, 128), pygame.Rect(650 + square_size * x, 200 + square_size * y, square_size, square_size))
-                if model[map_x][map_y] == -1:
+                if view_model[x][y] == -1:
                     pygame.draw.rect(self.window, (0, 0, 0), pygame.Rect(650 + square_size * x, 200 + square_size * y, square_size, square_size))
 
         pygame.draw.rect(self.window, (0, 0, 255), pygame.Rect(650, 200, square_size, square_size))
