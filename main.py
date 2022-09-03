@@ -1,3 +1,4 @@
+import math
 import typing
 
 import numpy
@@ -378,12 +379,12 @@ class MarioKart:
         square_size = 10
         view_model = np.zeros((MINIMAL_VIEW_SIZE, MINIMAL_VIEW_SIZE))
 
-        print(self.game_coord_to_circle(direction))
+        real_angle = self.game_coord_to_circle(direction)
 
         for x in range(-MINIMAL_VIEW_SIZE // 2, MINIMAL_VIEW_SIZE // 2):
             for y in range(-MINIMAL_VIEW_SIZE // 2, MINIMAL_VIEW_SIZE // 2):
-                map_x = (mario_position[0] + x)
-                map_y = (mario_position[1] + y)
+                map_x = math.floor((mario_position[0] + x))
+                map_y = math.floor((mario_position[1] + y))
 
                 if (0 < map_x < 127) and (0 < map_y < 127):
                     view_model[x][y] = model[map_x][map_y]
